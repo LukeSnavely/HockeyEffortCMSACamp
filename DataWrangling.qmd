@@ -3,3 +3,8 @@ title: "DataWrangling"
 format: html
 ---
 
+```{r}
+library(tidyverse)
+read_csv("https://github.com/bigdatacup/Big-Data-Cup-2025/releases/tag/Data")
+```
+
