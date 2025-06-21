@@ -1,6 +1,7 @@
 library(tidyverse)
 library(sportyR)
 
+# skaters <- read.csv("/Users/lukesnavely/Desktop/CMU/Capstone/skaters.csv")
 # Reading in files
 HG_Events <- read.csv("/Users/lukesnavely/Desktop/CMU/Capstone/2024-10-25.Team.H.@.Team.G.-.Events.csv")
 HG_Shifts <- read.csv("/Users/lukesnavely/Desktop/CMU/Capstone/2024-10-25.Team.H.@.Team.G.-.Shifts.csv")
@@ -17,7 +18,7 @@ EF_Tracking <- read.csv("/Users/lukesnavely/Desktop/CMU/Capstone/2024-11-16.Team
 
 ## Data cleaning
 # Converting tracking to a time object
-HG_Tracking_Join <- HG_Tracking |> 
+HG_Tracking <- HG_Tracking |> 
   mutate(seconds = ms(Game.Clock))
 
 # Converting shift start and end to a time object
@@ -51,11 +52,37 @@ Havoc_leaders <- Events |>
     Recoveries = sum(Event == "Puck Recovery")
   )
 
-# Team H, player 5 had most takeaways
-Player_5 <- HG_Tracking |> 
-  filter(Player.Id == 5)
-
-Player_5_shifts <- HG_Shifts |> 
-  filter(Player_Id == 5)
+Havoc_leaders |> 
+  ggplot(aes(x = Player_Id, y = Recoveries)) +
+  geom_col() +
+  facet_wrap(~ Team)
 
 
+## Shift number
+shift_number <- numeric(nrow(HG_Tracking))
+
+for (i in 1:nrow(HG_Tracking)) {
+  for (j in 1:nrow(HG_Shifts)) {
+    if(HG_Tracking$seconds[i] <= HG_Shifts$shift_start[j] &&
+       HG_Tracking$seconds[i] >= HG_Shifts$shift_end[j] &&
+       HG_Tracking$Period[i] == HG_Shifts$period[j]) {
+      shift_number[i] <- HG_Shifts$shift_number[j]
+    }
+  }
+}
+
+# Adding shift number
+shift_number <- numeric(nrow(HG_Tracking))
+shift_number <- HG_Tracking |> 
+  rowwise() |> 
+  mutate(
+    shift_number = HG_Shifts |> 
+      filter(
+        seconds >= shift_start,
+        seconds <= shift_end,
+        Period == period
+      ) |> 
+      pull(shift_number) |> 
+      first()
+  ) |> 
+  pull(shift_number)
